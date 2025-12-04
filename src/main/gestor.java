@@ -1,88 +1,99 @@
 package main;
 
-import main.ArchivoNoticias;
 import java.io.*;
 import java.util.List;
-import java.util.ArrayList;
 
 public class gestor {
 
-    private final String CONFIG = "data/config.ser";
-    private final String BD = "data/noticias.dat";
-    private final String LOG = "data/resumen_diario.log";
+    // data dentro de src
+    private static final String CONFIG = "src/data/config.ser";
+    private static final String LOG = "src/data/resumen_diario.log";
 
     public gestor() {
-        new File("data").mkdirs();
-        new File("reports").mkdirs();
+        // crear src/data y reports en la raíz del proyecto
+        File dataDir = new File("src/data");
+        File reportsDir = new File("reports");
+
+        if (!dataDir.exists()) {
+            dataDir.mkdirs();
+        }
+        if (!reportsDir.exists()) {
+            reportsDir.mkdirs();
+        }
     }
 
-    // =======================
-    // CONFIGURACIÓN
-    // =======================
+    // ==========================
+    // CONFIG SER (serializado)
+    // ==========================
     public String cargarURL() {
         File f = new File(CONFIG);
+
         if (!f.exists()) {
             guardarURL("https://www.xataka.com/feedburner.xml");
             return "https://www.xataka.com/feedburner.xml";
         }
 
-        try (BufferedReader br = new BufferedReader(new FileReader(CONFIG))) {
-            return br.readLine();
-        } catch (Exception e) {
-            return null;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(CONFIG))) {
+            Object obj = ois.readObject();
+            if (obj instanceof String) {
+                return (String) obj;
+            } else {
+                f.delete();
+                guardarURL("https://www.xataka.com/feedburner.xml");
+                return "https://www.xataka.com/feedburner.xml";
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            f.delete();
+            guardarURL("https://www.xataka.com/feedburner.xml");
+            return "https://www.xataka.com/feedburner.xml";
         }
     }
 
     public void guardarURL(String url) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(CONFIG))) {
-            bw.write(url);
-        } catch (Exception e) {
+        File dirData = new File("src/data");
+        if (!dirData.exists()) dirData.mkdirs();
+
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(CONFIG))) {
+            oos.writeObject(url);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // =======================
-    // LECTURA RSS
-    // =======================
+    // ==========================
+    // RSS
+    // ==========================
     public List<noticia> leerRSS(String urlFeed) {
         LectorRSS lector = new LectorRSS();
         return lector.leer(urlFeed);
     }
 
-    // =======================
-    // GUARDAR NOTICIAS
-    // =======================
+    // ==========================
+    // BASE DE DATOS RANDOM
+    // ==========================
     public void guardarNoticias(List<noticia> noticias) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(
-                new FileOutputStream(BD))) {
-            oos.writeObject(noticias);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        ArchivoNoticias archivo = new ArchivoNoticias();
+        archivo.guardarNuevas(noticias);
     }
 
     public List<noticia> leerBD() {
-        File f = new File(BD);
-        if (!f.exists()) return new ArrayList<>();
-
-        try (ObjectInputStream ois = new ObjectInputStream(
-                new FileInputStream(BD))) {
-            return (List<noticia>) ois.readObject();
-        } catch (Exception e) {
-            return new ArrayList<>();
-        }
+        ArchivoNoticias archivo = new ArchivoNoticias();
+        return archivo.leerTodas();
     }
 
-    // =======================
+    // ==========================
     // LOG
-    // =======================
+    // ==========================
     public void escribirLog(String msg) {
-        try (BufferedWriter bw = new BufferedWriter(
-                new FileWriter(LOG, true))) {
+        File dirData = new File("src/data");
+        if (!dirData.exists()) dirData.mkdirs();
 
-            bw.write(java.time.LocalDateTime.now() + " - " + msg);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(LOG, true))) {
+            String linea = java.time.LocalDateTime.now() + " - " + msg;
+            bw.write(linea);
             bw.newLine();
-
-        } catch (Exception e) {}
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

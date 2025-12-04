@@ -16,31 +16,15 @@ public class noticia implements Serializable {
         this.fecha = fecha;
     }
 
-    public String getTitulo() {
-        return titulo; }
+    public String getTitulo() { return titulo; }
+    public String getLink() { return link; }
+    public String getFuente() { return fuente; }
+    public long getFecha() { return fecha; }
 
-    public String getLink() {
-        return link; }
-
-    public String getFuente() {
-        return fuente; }
-
-    public long getFecha() {
-        return fecha; }
-
-
-    public void setTitulo(String titulo) {
-        this.titulo = titulo; }
-
-    public void setLink(String link) {
-        this.link = link; }
-
-    public void setFuente(String fuente) {
-        this.fuente = fuente; }
-
-    public void setFecha(long fecha) {
-        this.fecha = fecha; }
-
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+    public void setLink(String link) { this.link = link; }
+    public void setFuente(String fuente) { this.fuente = fuente; }
+    public void setFecha(long fecha) { this.fecha = fecha; }
 
     @Override
     public String toString() {
